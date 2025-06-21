@@ -8,6 +8,8 @@ project(sine)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # Generate compile_commands.json
 
+include(CMakePrintHelpers)
+
 # =================================================== DEPENDENCIES =================================================== #
 set(RAYLIB_VERSION 5.5)
 find_package(raylib ${RAYLIB_VERSION} QUIET) # QUIET or REQUIRED
@@ -31,6 +33,6 @@ add_subdirectory("thirdParty/ldtk")
 # =================================================== PROJECT =================================================== #
 file(GLOB_RECURSE MY_LIB_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/core/*.cpp")
 
-add_library(${PROJECT_NAME} INTERFACE "${MY_LIB_SOURCES}")
-target_link_libraries(${PROJECT_NAME} INTERFACE raylib imgui LDtkLoader::LDtkLoader)
-target_include_directories(${PROJECT_NAME} INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+add_library(${PROJECT_NAME} STATIC "${MY_LIB_SOURCES}")
+target_link_libraries(${PROJECT_NAME} PUBLIC raylib imgui LDtkLoader::LDtkLoader)
+target_include_directories(${PROJECT_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include/")
