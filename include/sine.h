@@ -5,8 +5,18 @@
 #include <cstring>
 #include <cmath>
 #include <memory>
+#include <typeindex>
+#include <functional>
 #include "raylib.h"
 #include "raymath.h"
+
+inline void InitSineWindow(int screenW, int screenH, const char* window_name, unsigned int configFlags = 0, unsigned int windowStateFlags = 0, int fps = 60){
+    SetConfigFlags(configFlags);
+    InitWindow(screenW, screenH, window_name);
+    SetWindowState(windowStateFlags);
+    
+    SetTargetFPS(fps);
+}
 
 class Entity
 {
@@ -318,15 +328,15 @@ public:
     }
 };
 
-// TODO: Make a working scene system
-class SineState : SineGroup
+class SineStateManager;
+
+class SineState : public SineGroup
 {
 private:
     
 public:
-    SineState() {
-        
-    }
+    SineStateManager* manager;
+    int stateIndex;
     
     virtual void start() {
         
@@ -345,36 +355,76 @@ public:
     }
 };
 
+// Stores a unique pointer and a factory function (lambda function)
+struct StoredState {
+    std::unique_ptr<SineState> instance;
+    std::function<std::unique_ptr<SineState>()> recreate;
+    int stateIndex;
+};
+
 class SineStateManager
 {
 private:
-    SineState* currentState;
+    std::vector<StoredState> states;
 public:
     SineStateManager() {}
+    int num_of_states = 0;
     
     void update(float dt) {
-        if(currentState) currentState->update(dt);
+        if(states[0].instance) states[0].instance->update(dt);
     }
     
     void draw() {
-        if(currentState) currentState->draw();
+        if(states[0].instance) states[0].instance->draw();
     }
     
-    void UnloadCurrentState() {
-        currentState->~SineState();
+    template<typename T>
+    void add(std::unique_ptr<T> state) {
+        static_assert(std::is_base_of<SineState, T>::value, "T must inherit from State");
+
+        num_of_states++;
+        state->manager = this;
+
+        StoredState stored;
+        stored.stateIndex = num_of_states;
+        state->stateIndex = num_of_states;
+        stored.instance = std::move(state);
+        
+        // Here it assigns the lambda function to the StoredState (it tells the recreate to be a function that does what's between {})
+        stored.recreate = []() {
+            return std::make_unique<T>();
+        };
+
+        states.push_back(std::move(stored));
+
+        if (num_of_states == 1)
+            states[0].instance->start();
+    }
+    
+    void SwitchState(int state_index) {
+        if (!states[0].instance) return;
+
+        // Refresh state[0] using its own factory
+        states[0].instance = states[0].recreate();
+        states[0].instance->manager = this;
+        states[0].instance->stateIndex = states[0].stateIndex;
+
+        for (int i = 0; i < states.size(); i++) {
+            if (states[i].stateIndex == state_index) {
+                std::swap(states[0], states[i]);
+                break;
+            }
+        }
+
+        states[0].instance->start();
+    }
+    
+    void UnloadStates() {
+        // TODO
     }
     
     ~SineStateManager() {}
 };
-
-inline void SwitchState(SineState*& currentState, SineState*& newState) {
-    if(currentState) {
-        delete currentState;
-    }
-    
-    currentState = newState;
-    currentState->start();
-}
 
 inline void DrawLetterBox(RenderTexture2D target, float scale, float gameW, float gameH) {
     BeginDrawing();
