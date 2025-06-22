@@ -10,10 +10,15 @@
 #include "raylib.h"
 #include "raymath.h"
 
-inline void InitSineWindow(int screenW, int screenH, const char* window_name, unsigned int configFlags = 0, unsigned int windowStateFlags = 0, int fps = 60){
+inline int gameWidth = 640, gameHeight = 360;
+
+inline void InitSineWindow(int screenW, int screenH, int gameW, int gameH, const char* window_name, unsigned int configFlags = 0, unsigned int windowStateFlags = 0, int fps = 60){
     SetConfigFlags(configFlags);
     InitWindow(screenW, screenH, window_name);
     SetWindowState(windowStateFlags);
+    
+    gameWidth = gameW;
+    gameHeight = gameH;
     
     SetTargetFPS(fps);
 }
@@ -337,17 +342,42 @@ private:
 public:
     SineStateManager* manager;
     int stateIndex;
+    Vector2 VirtualMousePosition;
+    float scale = 0;
+    float offsetX, offsetY;
     
     virtual void start() {
         
     }
     
     virtual void update(float dt) {
+        scale = std::min((float)GetScreenWidth()/gameWidth, (float)GetScreenHeight()/gameHeight);
+        offsetX = ((float)GetScreenWidth() - (gameWidth * scale)) * 0.5f;
+        offsetY = ((float)GetScreenHeight() - (gameHeight * scale)) * 0.5f;
+        VirtualMousePosition.x = ((GetMouseX() - offsetX) / scale);
+        VirtualMousePosition.y = ((GetMouseY() - offsetY) / scale);
+        
         SineGroup::update(dt);
     }
     
     virtual void draw() {
         SineGroup::draw();
+    }
+    
+    /// @brief Gets the virtual X mouse position, dependend on the scale of the window
+    /// @return 
+    float GetVirtualMouseX() {
+        return VirtualMousePosition.x;
+    }
+    /// @brief Gets the virtual Y mouse position, dependend on the scale of the window
+    /// @return 
+    float GetVirtualMouseY() {
+        return VirtualMousePosition.y;
+    }
+    /// @brief Gets the virtual mouse position, dependend on the scale of the window
+    /// @return 
+    Vector2 GetVirtualMousePosition() {
+        return VirtualMousePosition;
     }
     
     ~SineState() {
