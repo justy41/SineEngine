@@ -1,36 +1,29 @@
 #pragma once
 #include <iostream>
 #include "sine.h"
+#include "Player/player.h"
 
 class SecondState : public SineState
 {
 private:
     
 public:
-    SineSprite* player;
+    Player* player;
     
     void start() override {
-        player = new SineSprite(300, 150);
-        player->loadTexture(RESOURCES_PATH "circle.png");
-        player->tint = RED;
-        player->drag.x = 400;
-        add(player);
-        
         SineState::start();
+        
+        camera.zoom = 1;
+        
+        player = new Player(100, 100, 1200, -400);
+        player->loadTexture(RESOURCES_PATH "circle.png");
+        player->tint = BLUE;
+        player->drag = Vector2{500, 200};
+        add(player);
     }
     
     void update(float dt) override {
         SineState::update(dt);
-        
-        if(IsKeyDown(KEY_D)) {
-            player->acceleration.x = 1200;
-        }
-        else if(IsKeyDown(KEY_A)) {
-            player->acceleration.x = -1200;
-        }
-        else {
-            player->acceleration.x = 0;
-        }
         
         if(IsKeyPressed(KEY_P)) {
             manager->SwitchState(1);

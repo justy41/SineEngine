@@ -12,11 +12,11 @@ public:
     std::vector<Vector2> balls_positions;
     
     void start() override {
+        SineState::start();
+        
         player = new SineSprite(100, 100);
         player->loadTexture(RESOURCES_PATH "button.png");
         add(player);
-        
-        SineState::start();
     }
     
     void update(float dt) override {
