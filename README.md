@@ -162,4 +162,4 @@ public:
 ## Build and installation
 **For now the engine has only been tested on Windows!** Everything you need is inside the ```core```, ```include```, and ```thirdParty``` folders.
 
-If you are using CMake there also is a CMakeLists.txt file which automatically builds the project as a static library for windows. Even though it looks like an only-header library, there also is a ```sine.cpp``` file that allows for static library building.
+If you are using CMake there also is a CMakeLists.txt file which automatically builds the project as a static library for Windows. Even though it looks like an only-header library, there also is a ```sine.cpp``` file that allows for static library building.
