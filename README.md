@@ -5,7 +5,7 @@ A simple non-editor engine made for game development in C++ with [raylib](https:
 Its API is inspired by the game engine [HaxeFlixel](https://haxeflixel.com/).
 
 ## Features
-- Simple InitSineWindow() function to initialize your game with custom resolution, config flags, and FPS settings
+- Simple ```InitSineWindow()``` function to initialize your game with custom resolution, config flags, and FPS settings
 - ```SineBasic```: Base class with update/draw/destroy interface
 - ```SineEntity```: Adds physics-like properties such as velocity, acceleration, gravity, drag, hitbox, and more
 - ```SineSprite```: Extends SineEntity with texture rendering, scaling, tinting, and hitbox visualization
