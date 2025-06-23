@@ -5,25 +5,25 @@ A simple non-editor engine made for game development in C++ with [raylib](https:
 Its API is inspired by the game engine [HaxeFlixel](https://haxeflixel.com/).
 
 ## Features
-- Simple InitSineWindow() function to initialize your game with custom resolution, config flags, and FPS settings.
-- ```SineBasic```: Base class with update/draw/destroy interface.
-- ```SineEntity```: Adds physics-like properties such as velocity, acceleration, gravity, drag, hitbox, and more.
-- ```SineSprite```: Extends SineEntity with texture rendering, scaling, tinting, and hitbox visualization.
-- ```SineGroup```: Manages collections of objects (scene graphs).
+- Simple InitSineWindow() function to initialize your game with custom resolution, config flags, and FPS settings
+- ```SineBasic```: Base class with update/draw/destroy interface
+- ```SineEntity```: Adds physics-like properties such as velocity, acceleration, gravity, drag, hitbox, and more
+- ```SineSprite```: Extends SineEntity with texture rendering, scaling, tinting, and hitbox visualization
+- ```SineGroup```: Manages collections of objects (scene graphs)
 ###
-- ```SineState```: Represents a game screen or scene with built-in camera and virtual mouse support.
-- ```SineStateManager```: Hot-swappable and recreatable state containers via unique pointers and factory lambdas.
-- Virtual mouse coordinates scale perfectly with resolution changes.
+- ```SineState```: Represents a game screen or scene with built-in camera and virtual mouse support
+- ```SineStateManager```: Hot-swappable and recreatable state containers via unique pointers and factory lambdas
+- Virtual mouse coordinates scale perfectly with resolution changes
 ###
-- Built-in ```Camera2D``` support per state.
-- Automatic screen scaling and offset calculation.
-- Support for ```BeginMode2D/EndMode2D``` encapsulated in state rendering.
+- Built-in ```Camera2D``` support per state
+- Automatic screen scaling and offset calculation
+- Support for ```BeginMode2D/EndMode2D``` encapsulated in state rendering
 ###
-- Manual object lifetime control with new and delete managed by ```SineGroup```.
-- Smart pointers ```(std::unique_ptr)``` used for safe state recreation.
+- Manual object lifetime control with new and delete managed by ```SineGroup```
+- Smart pointers ```(std::unique_ptr)``` used for safe state recreation
 ###
-- 🔧 Dear ImGui: Integrated in the static library for in-game UI overlays and debugging tools.
-- 🧱 LDtkLoader: Integrated for seamless loading of LDtk level design data.
+- 🔧 Dear ImGui: Integrated in the static library for in-game UI overlays and debugging tools
+- 🧱 LDtkLoader: Integrated for seamless loading of LDtk level design data
 
 ## Example
 ***main.cpp***
