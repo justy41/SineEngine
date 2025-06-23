@@ -71,6 +71,9 @@ int main(){
 ***TemplateState.h***
 
 ```c
+// A state acts like a scene, in which there are three main functions: start, update and draw.
+// NOTE: These states can be made only-header.
+
 #pragma once
 #include <iostream>
 #include <vector>
