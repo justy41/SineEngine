@@ -15,6 +15,8 @@ int main(){
     manager.add(std::make_unique<TemplateState>());
     manager.add(std::make_unique<SecondState>());
     
+    manager.start();
+    
     while(!WindowShouldClose()) {
     // ======================================================== UPDATE ======================================================== //
         scale = std::min((float)GetScreenWidth()/gameWidth, (float)GetScreenHeight()/gameHeight);
