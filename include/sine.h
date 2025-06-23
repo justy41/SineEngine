@@ -23,111 +23,6 @@ inline void InitSineWindow(int screenW, int screenH, int gameW, int gameH, const
     SetTargetFPS(fps);
 }
 
-class Entity
-{
-private:
-    
-public:
-    Vector2 position;
-    float rotation;
-    Vector2 scale;
-    
-    char tag[256];
-    
-    Entity() {
-        position = Vector2{0, 0};
-        rotation = 0;
-        scale = Vector2{1, 1};
-        std::strcpy(tag, "");
-    }
-    
-    Entity(float x, float y) {
-        position = Vector2{x, y};
-        rotation = 0;
-        scale = Vector2{1, 1};
-        std::strcpy(tag, "");
-    }
-    
-    void SetTag(const char* tag) {
-        std::strcpy(this->tag, tag);
-    }
-    
-    virtual void Start() {
-        
-    }
-    
-    virtual void Update(float deltaTime) {
-        
-    }
-    
-    virtual void Draw() {
-        DrawCircle(position.x, position.y, 2, GREEN);
-    }
-    
-    ~Entity() {
-        
-    }
-};
-
-
-
-class Sprite : public Entity
-{
-private:
-    Rectangle source;
-    Vector2 origin;
-public:
-    Texture2D texture;
-    Color tint;
-    
-    Sprite(const char* texture_path, float x, float y, Color tint = WHITE) : Entity(x, y) {
-        texture = LoadTexture(texture_path);
-        source = Rectangle{0, 0, (float)texture.width, (float)texture.height};
-        origin = Vector2{texture.width/2.f, texture.height/2.f};
-        this->tint = tint;
-    }
-    
-    Sprite(const char* texture_path, float x, float y, Rectangle source, Color tint = WHITE) : Entity(x, y) {
-        texture = LoadTexture(texture_path);
-        this->source = source;
-        origin = Vector2{source.width/2.f, source.height/2.f};
-        this->tint = tint;
-    }
-    
-    void Start() override {
-        Entity::Start();
-    }
-    
-    void Update(float deltaTime) override {
-        Entity::Update(deltaTime);
-    }
-    
-    void Draw() override {
-        DrawTexturePro(
-            texture,
-            source,
-            Rectangle{position.x, position.y, source.width, source.height},
-            origin,
-            rotation,
-            tint
-        );
-        
-        Entity::Draw();
-    }
-    
-    ~Sprite() {
-        UnloadTexture(texture);
-    }
-};
-
-
-
-
-
-
-
-// PROTO:
-
 class SineBasic
 {
 private:
@@ -135,6 +30,7 @@ private:
 public:
     bool active = true;
     bool visible = true;
+    Camera2D* camera;
     
     SineBasic() {
         
@@ -160,7 +56,7 @@ public:
 class SineEntity : public SineBasic
 {
 private:
-    /* data */
+    
 public:
     Vector2 position;
     Vector2 velocity;
@@ -168,6 +64,7 @@ public:
     // Deceleration of the entity
     Vector2 drag;
     Vector2 offset;
+    float gravity;
     Rectangle hitbox;
     float rotation = 0;
     bool solid = true;
@@ -178,12 +75,14 @@ public:
         acceleration = Vector2{0, 0};
         drag = Vector2{0, 0};
         offset = Vector2{0, 0};
+        gravity = 0;
         hitbox = Rectangle{x, y, width, height};
     }
     
     void update(float dt) override {
         applyDrag(dt);
         
+        acceleration.y = gravity;
         velocity.x += acceleration.x * dt;
         velocity.y += acceleration.y * dt;
         
@@ -195,7 +94,7 @@ public:
     }
     
     void draw() override {
-        DrawCircle((int)hitbox.x + (int)hitbox.width/2, (int)hitbox.y + (int)hitbox.width/2, 3, GREEN);
+        DrawCircle((int)hitbox.x + (int)hitbox.width/2, (int)hitbox.y + (int)hitbox.height/2, 3, GREEN);
     }
     
     void applyDrag(float dt) {
@@ -279,6 +178,8 @@ public:
         if(debug_mode) {
             // DrawRectangleRec(hitbox, RED);
             DrawRectangleLinesEx(hitbox, 1, RED);
+            DrawCircle(position.x, position.y, 2, GREEN);
+            SineEntity::draw();
         }
     }
     
@@ -298,8 +199,10 @@ public:
         
     }
     
+    // Adds a heap allocated object in a std::vector<SineBasic*>
+    //
     // NOTE: always create objects with 'new' when adding to a Group
-    void add(SineBasic* obj) {
+    virtual void add(SineBasic* obj) {
         members.push_back(obj);
     }
     
@@ -330,6 +233,7 @@ public:
     ~SineGroup() {
         for(auto* m : members) delete m;
         members.clear();
+        // std::cout<<"\n\n CLEARING MEMBERS \n\n";
     }
 };
 
@@ -346,10 +250,30 @@ public:
     float scale = 0;
     float offsetX, offsetY;
     
-    virtual void start() {
-        
+    Camera2D camera;
+    
+    // Adds a heap allocated object in a std::vector<SineBasic*>
+    //
+    // NOTE: always create objects with 'new' when adding to a Group
+    virtual void add(SineBasic* obj) {
+        obj->camera = &camera;
+        SineGroup::add(obj);
     }
     
+    // Runs once when the State is loaded
+    //
+    // NOTE: put this as the first line if the function is overriden as SineState::start()
+    virtual void start() {
+        camera = {0};
+        camera.target = Vector2{gameWidth/2.f, gameHeight/2.f};
+        camera.offset = Vector2{gameWidth/2.f, gameHeight/2.f};
+        camera.rotation = 0;
+        camera.zoom = 1;
+    }
+    
+    // Runs every frame
+    //
+    // NOTE: put this as the first line if the function is overriden as SineState::update(dt)
     virtual void update(float dt) {
         scale = std::min((float)GetScreenWidth()/gameWidth, (float)GetScreenHeight()/gameHeight);
         offsetX = ((float)GetScreenWidth() - (gameWidth * scale)) * 0.5f;
@@ -360,8 +284,13 @@ public:
         SineGroup::update(dt);
     }
     
+    // Runs every frame
+    //
+    // NOTE: put this depending of the draw order as SineState::draw()
     virtual void draw() {
-        SineGroup::draw();
+        BeginMode2D(camera);
+            SineGroup::draw();
+        EndMode2D();
     }
     
     /// @brief Gets the virtual X mouse position, dependend on the scale of the window
@@ -399,6 +328,10 @@ private:
 public:
     SineStateManager() {}
     int num_of_states = 0;
+    
+    void start() {
+        if(states[0].instance) states[0].instance->start();
+    }
     
     void update(float dt) {
         if(states[0].instance) states[0].instance->update(dt);
