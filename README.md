@@ -27,6 +27,8 @@ Its API is inspired by the game engine [HaxeFlixel](https://haxeflixel.com/).
 
 ## Example
 ***main.cpp***
+
+SineEngine has built in support for letter box window resolution. For it to work there needs to be a RenderTexture2D and a scale factor that gets updated every frame. Example of how to do it is bellow:
 ```c
 #include <iostream>
 #include <cmath>
@@ -114,7 +116,7 @@ public:
 
 ***SecondState.h***
 
-The Player code can be found in the examples folder.
+The Player code can be found in the [examples folder](https://github.com/justy41/SineEngine/tree/main/examples).
 ```c
 #pragma once
 #include <iostream>
