@@ -108,18 +108,20 @@ public:
     }
     
     void draw() override {
-        SineState::draw();
-        
-        for(int i = 0; i<balls_positions.size(); i++) {
-            DrawCircle(balls_positions[i].x, balls_positions[i].y, 5, PURPLE);
-        }
+        BeginMode2D(camera);
+            SineState::draw();
+            
+            for(int i = 0; i<balls_positions.size(); i++) {
+                DrawCircle(balls_positions[i].x, balls_positions[i].y, 5, PURPLE);
+            }
+        EndMode2D();
     }
 };
 ```
 
 ***SecondState.h***
 
-The Player code can be found in the [examples folder](https://github.com/justy41/SineEngine/tree/main/examples).
+The Player code can be found in the [examples/game folder](https://github.com/justy41/SineEngine/tree/main/examples).
 ```c
 #pragma once
 #include <iostream>
@@ -136,6 +138,7 @@ public:
     void start() override {
         SineState::start();
         
+        LoadLDtkMap(RESOURCES_PATH "tilemaps/map_0.ldtk");
         camera.zoom = 1;
         
         player = new Player(100, 100, 1200, -400);
@@ -148,13 +151,23 @@ public:
     void update(float dt) override {
         SineState::update(dt);
         
+        if(IsKeyPressed(KEY_C)) {
+            camera.zoom -= 0.4f;
+        }
+        if(IsKeyPressed(KEY_X)) {
+            camera.zoom += 0.4f;
+        }
+        
         if(IsKeyPressed(KEY_P)) {
             manager->SwitchState(1);
         }
     }
     
     void draw() override {
-        SineState::draw();
+        BeginMode2D(camera);
+            SineState::draw();
+            DrawLDtkMap();
+        EndMode2D();
     }
 };
 ```
