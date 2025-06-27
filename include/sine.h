@@ -373,14 +373,16 @@ public:
     void DrawLDtkLayer(const char* layer_name) {
         for(const auto& level : world->allLevels()) {
             std::string ts_name = level.getLayer(layer_name).getTileset().name;
-            for(const auto& tile : level.getLayer(layer_name).allTiles()) {
-                r = tile.getTextureRect();
-                DrawTextureRec(
-                    tilesets[ts_name],
-                    Rectangle{(float)r.x, (float)r.y, (float)r.width, (float)r.height},
-                    Vector2{(float)tile.getPosition().x + level.position.x, (float)tile.getPosition().y + level.position.y},
-                    WHITE
-                );
+            if(level.getLayer(layer_name).isVisible()) {
+                for(const auto& tile : level.getLayer(layer_name).allTiles()) {
+                    r = tile.getTextureRect();
+                    DrawTextureRec(
+                        tilesets[ts_name],
+                        Rectangle{(float)r.x, (float)r.y, (float)r.width, (float)r.height},
+                        Vector2{(float)tile.getPosition().x + level.position.x, (float)tile.getPosition().y + level.position.y},
+                        WHITE
+                    );
+                }
             }
         }
     }
