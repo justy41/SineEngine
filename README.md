@@ -121,7 +121,7 @@ public:
 
 ***SecondState.h***
 
-The Player code can be found in the [examples/game folder]([https://github.com/justy41/SineEngine/tree/main/examples](https://github.com/justy41/SineEngine/blob/main/examples/game/src/Player/player.cpp)).
+The Player code can be found in the [examples/game folder]([https://github.com/justy41/SineEngine/tree/main/examples](https://github.com/justy41/SineEngine/blob/main/examples/game/src/Player/player.cpp).
 ```c
 #pragma once
 #include <iostream>
