@@ -314,7 +314,7 @@ public:
         for(const auto& level : world->allLevels()) {
             for(const auto& layer : level.allLayers()) {
                 if(tilesets.find(layer.getTileset().name) == tilesets.end()) {
-                    std::string texture_file_name = layer.getTileset().path; // Load file path relative to the .ldtk file 
+                    std::string texture_file_name = layer.getTileset().path; // Load file path relative to the .ldtk file
                     std::string map_path = tilemap_path;
                     for(int i = map_path.size()-1; i>=0; i--) {
                         if(map_path[i-1] == '/') {      // When the '/' is next...
@@ -407,6 +407,25 @@ public:
         
     }
 };
+
+inline bool overlap(SineEntity* entA, SineEntity* entB) {
+    if(CheckCollisionRecs(entA->hitbox, entB->hitbox)) {
+        return true;
+    }
+    return false;
+}
+
+inline bool overlap(SineEntity* ent, SineGroup* group) {
+    for(auto entity : group->members) {
+        if(entity->active && ent->active) {
+            SineEntity* e = dynamic_cast<SineEntity*>(entity);
+            if(CheckCollisionRecs(ent->hitbox, e->hitbox)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 // Stores a unique pointer and a factory function (lambda function)
 struct StoredState {
