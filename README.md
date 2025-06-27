@@ -172,6 +172,8 @@ public:
 };
 ```
 
+![Example gif](https://github.com/justy41/SineEngine/blob/main/gifs/ldtk_map_raylib.gif)
+
 ## Build and installation
 **For now the engine has only been tested on Windows!** Everything you need is inside the ```core```, ```include```, and ```thirdParty``` folders.
 
