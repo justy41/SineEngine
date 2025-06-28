@@ -13,13 +13,14 @@ public:
     void start() override {
         SineState::start();
         
-        LoadLDtkMap(RESOURCES_PATH "tilemaps/map_0.ldtk");
+        LoadLDtkMap(RESOURCES_PATH "tilemaps/map_0.ldtk", 16, {"Ground", "Snow"});
         camera.zoom = 1;
         
         player = new Player(100, 100, 1200, -400);
         player->loadTexture(RESOURCES_PATH "circle.png");
         player->tint = BLUE;
         player->drag = Vector2{500, 200};
+        player->solid = true;
         add(player);
     }
     
