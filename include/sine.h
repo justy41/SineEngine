@@ -37,6 +37,19 @@ struct FloatPairHash {
     }
 };
 
+// Stupid Rectangle hash function because C++ is too stupid to process anything... again
+struct RectangleHash {
+    std::size_t operator()(const Rectangle& rect) const {
+        std::size_t hx = std::hash<float>{}(rect.x);
+        std::size_t hy = std::hash<float>{}(rect.y);
+        std::size_t hw = std::hash<float>{}(rect.width);
+        std::size_t hh = std::hash<float>{}(rect.height);
+
+        // Combine hashes using a simple hash combining technique
+        return ((hx ^ (hy << 1)) >> 1) ^ (hw << 1) ^ (hh << 2);
+    }
+};
+
 class SineState;
 
 class SineBasic
@@ -154,6 +167,7 @@ public:
     const ldtk::Layer* ground_layer;
     float tile_size = 0;
     std::unordered_map<std::pair<float, float>, bool, FloatPairHash> collisions_layer;
+    std::unordered_map<std::string, Rectangle> entities;
     
     // Adds a heap allocated object in a std::vector<SineBasic*>
     //
@@ -204,6 +218,8 @@ public:
     //
     // NOTE: tilesets are loaded relative to the file path of the .ldtk file. File paths can be found in the .ldtk file.
     // The tileset paths are printed in the command line to see.
+    //
+    // NOTE: in ldtk the entities need to have a CUSTOM FIELD called "Name" <- exactly written like this for it to work
     void LoadLDtkMap(const char* tilemap_path, float fixed_tile_size, std::vector<std::string> collision_layer_names) {
         ldtkProject.loadFromFile(tilemap_path);
         world = &ldtkProject.getWorld();
@@ -223,40 +239,69 @@ public:
         // This block of code takes the tilemap_path and erases the map.ldtk part.
         // After that, the tileset path from the ldtk layer is appended to it, forming the path to the tileset.
         // EXAMPLE: tilemaps/map.ldtk + ../tilesets/tileset_1.png = tilemaps/../tilesets/tileset_1.png
+        //
+        // The entities are also extracted in an unordered_map for later use.
         for(const auto& level : world->allLevels()) {
             for(const auto& layer : level.allLayers()) {
-                if(tilesets.find(layer.getTileset().name) == tilesets.end()) {
-                    std::string texture_file_name = layer.getTileset().path; // Load file path relative to the .ldtk file
-                    std::string map_path = tilemap_path;
-                    for(int i = map_path.size()-1; i>=0; i--) {
-                        if(map_path[i-1] == '/') {      // When the '/' is next...
-                            map_path.erase(i);          // ...then erase.
-                            break;
+                if(layer.getType() != ldtk::LayerType::Entities) {
+                    if(tilesets.find(layer.getTileset().name) == tilesets.end()) {
+                        std::string texture_file_name = layer.getTileset().path; // Load file path relative to the .ldtk file
+                        std::string map_path = tilemap_path;
+                        for(int i = map_path.size()-1; i>=0; i--) {
+                            if(map_path[i-1] == '/') {      // When the '/' is next...
+                                map_path.erase(i);          // ...then erase.
+                                break;
+                            }
                         }
+                        
+                        map_path.append(texture_file_name); // Combine the two file paths.
+                        tilesets.insert({layer.getTileset().name, LoadTexture(map_path.c_str())}); // Insert the name and load the tileset.
+                        std::cout<<"\nTILESET PATH:\n"<<map_path<<"\n\n";
                     }
-                    
-                    map_path.append(texture_file_name); // Combine the two file paths.
-                    tilesets.insert({layer.getTileset().name, LoadTexture(map_path.c_str())}); // Insert the name and load the tileset.
-                    std::cout<<"\nTILESET PATH:\n"<<map_path<<"\n\n";
+                }
+                else {
+                    // Saving ldtk entities as an element with Name, Position and Size in an unordered_map
+                    for(const auto& ent : layer.allEntities()) {
+                        entities.insert({
+                            ent.getField<std::string>("Name").value(),
+                            Rectangle{
+                                (float)ent.getPosition().x + level.position.x,
+                                (float)ent.getPosition().y + level.position.y,
+                                (float)ent.getSize().x,
+                                (float)ent.getSize().y
+                            }
+                        });
+                    }
                 }
             }
         }
+    }
+    
+    Rectangle getLDtkEntity(std::string Name_field) {
+        Rectangle rect = Rectangle{0, 0, 0, 0};
+        if(entities[Name_field].width != 0) {
+            rect = Rectangle{entities[Name_field].x, entities[Name_field].y, entities[Name_field].width, entities[Name_field].height};
+            return rect;
+        }
+        return rect;
     }
     
     // Draws the entire LDtk map
     void DrawLDtkMap() {
         for(const auto& level : world->allLevels()) {
             for(int i = level.allLayers().size()-1; i>=0; i--) { // Reversed order because LDtkLoader takes the layers inverted.
-                std::string ts_name = level.allLayers()[i].getTileset().name; // Get the tileset name of the current layer.
-                if(level.allLayers()[i].isVisible()) {
-                    for(const auto& tile : level.allLayers()[i].allTiles()) { // Draw all tiles based on their source rect.
-                        r = tile.getTextureRect(); // source rect
-                        DrawTextureRec(
-                            tilesets[ts_name],
-                            Rectangle{(float)r.x, (float)r.y, (float)r.width, (float)r.height},
-                            Vector2{(float)tile.getPosition().x + level.position.x, (float)tile.getPosition().y + level.position.y},
-                            WHITE
-                        );
+                if(level.allLayers()[i].getType() != ldtk::LayerType::Entities) {
+                    std::string ts_name = level.allLayers()[i].getTileset().name; // Get the tileset name of the current layer.
+                    if(level.allLayers()[i].isVisible()) {
+                        for(const auto& tile : level.allLayers()[i].allTiles()) { // Draw all tiles based on their source rect.
+                            r = tile.getTextureRect(); // source rect
+                            DrawTextureRec(
+                                tilesets[ts_name],
+                                Rectangle{(float)r.x, (float)r.y, (float)r.width, (float)r.height},
+                                Vector2{(float)tile.getPosition().x + level.position.x, (float)tile.getPosition().y + level.position.y},
+                                WHITE
+                            );
+                        }
                     }
                 }
             }
@@ -266,22 +311,24 @@ public:
     // Draws only the named level
     void DrawLDtkLevel(const char* level_name) {
         for(int i = world->getLevel(level_name).allLayers().size()-1; i>=0; i--) {
-            std::string ts_name = world->getLevel(level_name).allLayers()[i].getTileset().name;
-            if(world->getLevel(level_name).allLayers()[i].isVisible()) {
-                for(const auto& tile : world->getLevel(level_name).allLayers()[i].allTiles()) {
-                    r = tile.getTextureRect();
-                    DrawTextureRec(
-                        tilesets[ts_name],
-                        Rectangle{(float)r.x, (float)r.y, (float)r.width, (float)r.height},
-                        Vector2{(float)tile.getPosition().x, (float)tile.getPosition().y},
-                        WHITE
-                    );
+            if(world->getLevel(level_name).allLayers()[i].getType() != ldtk::LayerType::Entities) {
+                std::string ts_name = world->getLevel(level_name).allLayers()[i].getTileset().name;
+                if(world->getLevel(level_name).allLayers()[i].isVisible()) {
+                    for(const auto& tile : world->getLevel(level_name).allLayers()[i].allTiles()) {
+                        r = tile.getTextureRect();
+                        DrawTextureRec(
+                            tilesets[ts_name],
+                            Rectangle{(float)r.x, (float)r.y, (float)r.width, (float)r.height},
+                            Vector2{(float)tile.getPosition().x, (float)tile.getPosition().y},
+                            WHITE
+                        );
+                    }
                 }
             }
         }
     }
     
-    // Draws a layer from all levels
+    // Draws a layer from all levels (exception is entities layer)
     void DrawLDtkLayer(const char* layer_name) {
         for(const auto& level : world->allLevels()) {
             std::string ts_name = level.getLayer(layer_name).getTileset().name;
