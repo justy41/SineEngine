@@ -141,7 +141,7 @@ public:
         
         LoadLDtkMap(RESOURCES_PATH "tilemaps/map_0.ldtk", 16, {"Ground", "Snow"});
         
-        player = new Player(500, 100, 1200, -400);
+        player = new Player(getLDtkEntity("Player").x, getLDtkEntity("Player").y, 1200, -400); // Getting an Entity by the CUSTOM FIELD "Name" from LDtk
         player->loadTexture(RESOURCES_PATH "circle.png");
         player->tint = BLUE;
         player->drag = Vector2{500, 200};
@@ -153,7 +153,7 @@ public:
     
     void update(float dt) override {
         SineState::update(dt);
-        CameraFollow(player->position);
+        CameraFollow(player->position); // Necessary for target following
         
         if(IsKeyPressed(KEY_C)) {
             camera.zoom -= 0.4f;
