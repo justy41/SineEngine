@@ -40,6 +40,7 @@ SineEngine has built in support for letter box window resolution. For it to work
 int main(){
     InitSineWindow(1280, 720, 640, 360, "game", FLAG_WINDOW_RESIZABLE, FLAG_WINDOW_TRANSPARENT);
     RenderTexture2D target = LoadRenderTexture(gameWidth, gameHeight);
+    SetTextureFilter(target.texture, TEXTURE_FILTER_POINT);
     float scale = 0;
     
     // ======================================================== START ========================================================= //
@@ -138,18 +139,21 @@ public:
     void start() override {
         SineState::start();
         
-        LoadLDtkMap(RESOURCES_PATH "tilemaps/map_0.ldtk");
-        camera.zoom = 1;
+        LoadLDtkMap(RESOURCES_PATH "tilemaps/map_0.ldtk", 16, {"Ground", "Snow"});
         
-        player = new Player(100, 100, 1200, -400);
+        player = new Player(500, 100, 1200, -400);
         player->loadTexture(RESOURCES_PATH "circle.png");
         player->tint = BLUE;
         player->drag = Vector2{500, 200};
+        player->solid = true;
         add(player);
+        
+        camera.target = player->position;
     }
     
     void update(float dt) override {
         SineState::update(dt);
+        CameraFollow(player->position);
         
         if(IsKeyPressed(KEY_C)) {
             camera.zoom -= 0.4f;
@@ -167,6 +171,7 @@ public:
         BeginMode2D(camera);
             SineState::draw();
             DrawLDtkMap();
+            DrawLDtkCollisionLayers();
         EndMode2D();
     }
 };
