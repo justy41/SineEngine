@@ -15,7 +15,7 @@ public:
         
         LoadLDtkMap(RESOURCES_PATH "tilemaps/map_0.ldtk", 16, {"Ground", "Snow"});
         
-        player = new Player(500, 100, 1200, -400);
+        player = new Player(getLDtkEntity("Player").x, getLDtkEntity("Player").y, 1200, -400);
         player->loadTexture(RESOURCES_PATH "circle.png");
         player->tint = BLUE;
         player->drag = Vector2{500, 200};
