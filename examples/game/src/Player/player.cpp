@@ -11,7 +11,16 @@ Player::Player(float x, float y, float acc, float jumpForce, float gravityForce,
 void Player::update(float dt) {
     SineSprite::update(dt);
     
-    SetPlayerBounds();
+    // SetPlayerBounds();
+    if(collisions["down"]) {
+        SetGravity(0);
+    }
+    else {
+        SetGravity(gravityForce);
+        if(velocity.y > 0) {
+            SetGravity(gravityForce*fallMultiplier);
+        }
+    }
     
     // Sets the camera zoom
     if(IsKeyPressed(KEY_Z)) {

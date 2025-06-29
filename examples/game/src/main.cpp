@@ -8,6 +8,7 @@
 int main(){
     InitSineWindow(1280, 720, 640, 360, "game", FLAG_WINDOW_RESIZABLE, FLAG_WINDOW_TRANSPARENT);
     RenderTexture2D target = LoadRenderTexture(gameWidth, gameHeight);
+    SetTextureFilter(target.texture, TEXTURE_FILTER_POINT);
     float scale = 0;
     
     // ======================================================== START ========================================================= //

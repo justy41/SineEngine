@@ -138,7 +138,7 @@ class SineState : public SineGroup
 private:
     ldtk::IntRect r;
     std::unordered_map<std::string, Texture2D> tilesets;
-    std::unordered_map<std::pair<float, float>, bool, FloatPairHash> collisions_layer;
+    bool ldtk_debug;
 public:
     SineStateManager* manager;
     int stateIndex;
@@ -153,6 +153,7 @@ public:
     const ldtk::Level* level_0;
     const ldtk::Layer* ground_layer;
     float tile_size = 0;
+    std::unordered_map<std::pair<float, float>, bool, FloatPairHash> collisions_layer;
     
     // Adds a heap allocated object in a std::vector<SineBasic*>
     //
@@ -194,6 +195,11 @@ public:
         SineGroup::draw();
     }
     
+    // Make the camera follow a position
+    void CameraFollow(Vector2 pos) {
+        camera.target = Vector2{std::round(pos.x), std::round(pos.y)};
+    }
+    
     // Loads a LDtk map
     //
     // NOTE: tilesets are loaded relative to the file path of the .ldtk file. File paths can be found in the .ldtk file.
@@ -207,7 +213,7 @@ public:
             if(!collision_layer_names.empty()) {
                 for(auto name : collision_layer_names) {
                     for(const auto& tile : level.getLayer(name).allTiles()) {
-                        collisions_layer.insert({std::make_pair(tile.getPosition().x, tile.getPosition().y), true});
+                        collisions_layer.insert({std::make_pair(tile.getGridPosition().x + level.position.x/tile_size, tile.getGridPosition().y + level.position.y/tile_size), true});
                     }
                 }
             }
@@ -293,6 +299,19 @@ public:
         }
     }
     
+    // Draw the LDtk map collision hitboxes if F6 key is pressed
+    void DrawLDtkCollisionLayers() {
+        if(IsKeyPressed(KEY_F6)) {
+            ldtk_debug = !ldtk_debug;
+        }
+        
+        if(ldtk_debug && !collisions_layer.empty()) {
+            for(auto tile : collisions_layer) {
+                DrawRectangleLinesEx(Rectangle{tile.first.first*tile_size, tile.first.second*tile_size, tile_size, tile_size}, 2, RED);
+            }
+        }
+    }
+    
     // ===================================================== LDTK MAP COLLISIONS ===================================================== //
     std::vector<Vector2> tiles_around(Vector2 pos, float tile_size, std::unordered_map<std::pair<float, float>, bool, FloatPairHash> collisions_layer) {
         std::vector<Vector2> tiles;
@@ -352,6 +371,8 @@ public:
     float rotation = 0;
     bool solid = true;
     
+    std::unordered_map<std::string, bool> collisions;
+    
     SineEntity(float x = 0, float y = 0, float width = 16, float height = 16) {
         position = Vector2{x, y};
         velocity = Vector2{0, 0};
@@ -360,22 +381,70 @@ public:
         offset = Vector2{0, 0};
         gravity = 0;
         hitbox = Rectangle{x, y, width, height};
+        
+        collisions.insert({{"right", false}, {"left", false}, {"down", false}, {"up", false}});
     }
     
     void update(float dt) override {
+        collisions["right"] = false;
+        collisions["left"] = false;
+        collisions["down"] = false;
+        collisions["up"] = false;
+        
         applyDrag(dt);
         
         velocity.x += acceleration.x * dt;
-        // TODO: TILEMAP COLLISION RESOLUTION
+        position.x += velocity.x * dt; // Update position.x based on velocity.x
         
-        acceleration.y = gravity;
-        velocity.y += acceleration.y * dt;
-        
-        position.x += velocity.x * dt;
-        position.y += velocity.y * dt;
-        
+        // ================================================ COLLISION RESOLUTION X ================================================ //
         hitbox.x = position.x + offset.x;
+        if(solid) {
+            for(Rectangle rect : parent_state->physics_rects_around(position)) {
+                if(CheckCollisionRecs(hitbox, rect)) {
+                    if(velocity.x > 0) {
+                        hitbox.x = rect.x - hitbox.width;
+                        collisions["right"] = true;
+                    }
+                    if(velocity.x < 0) {
+                        hitbox.x = rect.x + rect.width;
+                        collisions["left"] = true;
+                    }
+                    position.x = hitbox.x - offset.x;
+                }
+            }
+        }
+        
+        if(collisions["right"] || collisions["left"]) {
+            velocity.x = 0;
+        }
+        // ======================================================================================================================== //
+        
+        acceleration.y = gravity; // Y acceleration is basically gravity
+        velocity.y += acceleration.y * dt;
+        position.y += velocity.y * dt; // Update position.y based on velocity.y
+        
+        // ================================================ COLLISION RESOLUTION Y ================================================ //
         hitbox.y = position.y + offset.y;
+        if(solid) {
+            for(Rectangle rect : parent_state->physics_rects_around(position)) {
+                if(CheckCollisionRecs(hitbox, rect)) {
+                    if(velocity.y > 0) {
+                        hitbox.y = rect.y - hitbox.height;
+                        collisions["down"] = true;
+                    }
+                    if(velocity.y < 0) {
+                        hitbox.y = rect.y + rect.height;
+                        collisions["up"] = true;
+                    }
+                    position.y = hitbox.y - offset.y;
+                }
+            }
+        }
+        
+        if(collisions["down"] || collisions["up"]) {
+            velocity.y = 0;
+        }
+        // ======================================================================================================================== //
     }
     
     void draw() override {
