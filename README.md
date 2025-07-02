@@ -38,7 +38,7 @@ SineEngine has built in support for letter box window resolution. For it to work
 #include "SecondState.h"
 
 int main(){
-    InitSineWindow(1280, 720, 640, 360, "game", FLAG_WINDOW_RESIZABLE, FLAG_WINDOW_TRANSPARENT);
+    InitSineWindow(1280, 720, 640, 360, "game", FLAG_WINDOW_RESIZABLE);
     RenderTexture2D target = LoadRenderTexture(gameWidth, gameHeight);
     SetTextureFilter(target.texture, TEXTURE_FILTER_POINT);
     float scale = 0;
